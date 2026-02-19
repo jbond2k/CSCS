@@ -5,8 +5,11 @@ const messageStore = useMessageStore()
 
 const emit = defineEmits(['login'])
 
-function login(user) {
-  emit('login', user)
+const currentUser = defineModel()
+
+function login(chosenUser) {
+  localStorage.setItem('user', JSON.stringify(chosenUser))
+  currentUser.value = chosenUser
 }
 </script>
 
