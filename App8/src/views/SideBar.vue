@@ -8,6 +8,8 @@ const addUsername = ref('')
 
 const reqs = ref([])
 const friends = ref([])
+const activeUser = ref({})
+const showInfo = ref(false)
 
 const loadRequests = async () => {
   try {
@@ -19,6 +21,12 @@ const loadRequests = async () => {
       id: friend.userId,
       username: friend.username,
     }))
+    activeUser.value = {
+      email: userData.email,
+      firstName: userData.firstName,
+      lastName: userData.lastName,
+    }
+    console.log('Active User: ', activeUser.value)
   } catch (error) {
     console.error('Failed to load requests:', error)
   }
@@ -80,6 +88,11 @@ function removeFriend(id) {
   messageStore.removeFriend(id)
   friends.value = friends.value.filter((friend) => friend.id !== id)
 }
+
+function showUser() {
+  showInfo.value = showInfo.value ? false : true
+  console.log('Show User changed')
+}
 </script>
 
 <template>
@@ -126,20 +139,52 @@ function removeFriend(id) {
         </ul>
       </div>
     </div>
+    <div class="user">
+      <span @click="showUser"
+        ><span v-if="!showInfo">Logged in as: </span>{{ messageStore.currentUser.username }}</span
+      >
+      <ul v-if="showInfo">
+        <li>{{ activeUser.email }}</li>
+        <li>{{ activeUser.firstName }}</li>
+        <li>{{ activeUser.lastName }}</li>
+      </ul>
+    </div>
   </div>
 </template>
 
 <style scoped>
+.user {
+  display: flex;
+  flex-direction: column;
+  margin-top: auto;
+  margin-bottom: 0;
+}
+
+.user ul {
+  list-style: none;
+  padding: 0;
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  max-height: 14vh;
+  overflow-y: auto;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+  text-align: left;
+}
+
 .sidebar {
   background-color: #dcdcdc;
   width: 100%;
   box-sizing: border-box;
   display: flex;
   flex-direction: column;
-  align-items: center;
   padding: 20px;
   gap: 16px;
   height: 100%;
+  min-height: 94vh;
+  overflow-y: auto;
 }
 
 .friends {
