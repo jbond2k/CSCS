@@ -17,6 +17,42 @@ const currentChat = ref('')
 const chatInvites = ref('')
 const showMembersList = ref(false)
 const newChat = ref('')
+let poll = null
+
+const getNewRequests = async () => {
+  const data = await messageStore.getFriendRequests()
+  console.log(data)
+  if (data.length === 0) return
+
+  for (let i = 0; i < data.length; i++) {
+    const dataId = data[i]._id ?? data[i].id
+    const exists = reqs.value.some((r) => r._id === dataId)
+    if (!exists) {
+      reqs.value.push(data[i])
+      console.log('request added: ', data[i])
+    }
+  }
+  const userData = await messageStore.getProfile()
+
+  const invites = userData.requests
+    .filter((request) => request.kind !== 'FriendRequest')
+    .map((request) => ({
+      chatId: request.chat.chatId,
+      chatName: request.chat.name,
+      Id: request._id,
+    }))
+
+  if (invites.length === 0) return
+
+  for (let i = 0; i < invites.length; i++) {
+    const dataId = invites[i].Id
+    const exists = chatInvites.value.some((r) => r.Id === dataId)
+    if (!exists) {
+      chatInvites.value.push(invites[i])
+      console.log('request added: ', invites[i])
+    }
+  }
+}
 
 const loadRequests = async () => {
   try {
@@ -28,11 +64,13 @@ const loadRequests = async () => {
       id: friend.userId,
       username: friend.username,
     }))
-    chatInvites.value = userData.requests.map((request) => ({
-      chatId: request.chat.chatId,
-      chatName: request.chat.name,
-      Id: request._id,
-    }))
+    chatInvites.value = userData.requests
+      .filter((request) => request.kind !== 'FriendRequest')
+      .map((request) => ({
+        chatId: request.chat.chatId,
+        chatName: request.chat.name,
+        Id: request._id,
+      }))
     console.log('chat Requests: ', chatInvites.value)
     for (var i = 0; i < userData.chat_sessions.length; i++) {
       const chatInfo = await getChats(userData.chat_sessions[i])
@@ -51,6 +89,7 @@ const loadRequests = async () => {
       groupRequests: userData.requests,
     }
     console.log('Active User: ', activeUser.value)
+    poll = setInterval(getNewRequests, 10000)
   } catch (error) {
     console.error('Failed to load requests:', error)
   }
@@ -172,7 +211,12 @@ async function getChats(chatId) {
       <div class="friends friendAdd">
         <h1>Add Friend</h1>
         <div class="row">
-          <input id="addUser" v-model="addUsername" placeholder="Enter Username" />
+          <input
+            id="addUser"
+            v-model="addUsername"
+            placeholder="Enter Username"
+            @keydown.enter="sendRequest"
+          />
           <button @click="sendRequest">Add</button>
         </div>
       </div>
@@ -217,7 +261,12 @@ async function getChats(chatId) {
       <div class="friends friendAdd">
         <h1>Create Chat</h1>
         <div class="row">
-          <input id="createChat" v-model="newChat" placeholder="Enter Chat Name" />
+          <input
+            id="createChat"
+            v-model="newChat"
+            placeholder="Enter Chat Name"
+            @keydown.enter="createChat"
+          />
           <button @click="createChat">Create</button>
         </div>
       </div>
@@ -239,7 +288,12 @@ async function getChats(chatId) {
         <div class="friends friendAdd">
           <h1>Invite to chat</h1>
           <div class="row">
-            <input id="inviteUser" v-model="addUsername" placeholder="Enter Username" />
+            <input
+              id="inviteUser"
+              v-model="addUsername"
+              placeholder="Enter Username"
+              @keydown.enter="sendChatRequest"
+            />
             <button @click="sendChatRequest">Invite</button>
           </div>
         </div>
@@ -345,6 +399,7 @@ async function getChats(chatId) {
   gap: 16px;
   height: 100%;
   min-height: 94vh;
+  max-height: 94vh;
   overflow-y: auto;
 }
 

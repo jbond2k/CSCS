@@ -9,8 +9,7 @@ export const useMessageStore = defineStore('messageStore', () => {
   const messages = reactive([])
   const activeChat = ref(null)
   const users = reactive([])
-  const offset = ref(0)
-  var timer = null
+  let timer = null
 
   const currentUser = ref({
     username: localStorage.getItem('username'),
@@ -21,7 +20,6 @@ export const useMessageStore = defineStore('messageStore', () => {
 
   watch(activeChat, (newValue) => {
     messages.splice(0, messages.length)
-    offset.value = 0
     getMsgs()
     if (timer) {
       clearInterval(timer)
@@ -30,18 +28,10 @@ export const useMessageStore = defineStore('messageStore', () => {
     timer = setInterval(checkMessages, 5000)
   })
 
-  /*
-  watch(messages, (newValue) => {
-    if (messages.length < 11 && messages.length > 1) {
-      getOldMsgs()
-    }
-    console.log('messages array: ', messages)
-  })
-*/
   async function checkMessages() {
     if (!activeChat.value || !activeChat.value._id) return
     try {
-      const recent = await getMessages(activeChat.value._id, 0)
+      const recent = await getMessages(activeChat.value._id)
       if (recent.length === 0) return
 
       for (let i = 0; i < recent.length; i++) {
@@ -77,38 +67,11 @@ export const useMessageStore = defineStore('messageStore', () => {
 
   async function getMsgs() {
     if (!activeChat.value || !activeChat.value._id) return
-    const msgs = await getMessages(activeChat.value._id, offset.value)
+    const msgs = await getMessages(activeChat.value._id)
     for (var i = 0; i < msgs.length; i++) {
       addMsg(msgs[i])
     }
     console.log('msgs: ', msgs)
-    offset.value = msgs.length
-    console.log(offset.value)
-  }
-
-  async function getOldMsgs() {
-    if (!activeChat.value || !activeChat.value._id) return
-    const msgs = await getMessages(activeChat.value._id, offset.value)
-    for (var i = 0; i < msgs.length; i++) {
-      addOldMsg(msgs[i])
-    }
-    console.log('msgs: ', msgs)
-    offset.value += msgs.length
-    console.log(offset.value)
-  }
-
-  function addOldMsg(msg) {
-    const sender = users.find((u) => u.user_id === msg.sender)
-    console.log('sender: ', sender)
-    const content = msg.content
-    const id = msg._id ?? msg.id
-    var matched = false
-    for (var i = 0; i < messages.length; i++) {
-      if (messages[i].id === id) {
-        matched = true
-      }
-    }
-    if (!matched) messages.unshift({ sender: sender.username, content: content, id: id })
   }
 
   async function createChat(chat) {
@@ -332,12 +295,15 @@ export const useMessageStore = defineStore('messageStore', () => {
     }
   }
 
-  async function getMessages(chatId, offset) {
+  async function getMessages(chatId) {
     console.log('inside getProfile')
 
     const host = 'https://stingray-app-u3bsh.ondigitalocean.app'
 
-    const url = host + `/chat/${chatId}/messages?limit=10&offset=${offset}`
+    /*The request seems to grab oldest-newest, so I removed the limit
+    to allow newest messages to appear instantly. Also the offset doesn't
+    appear to work properly, so I had to remove it as well.*/
+    const url = host + `/chat/${chatId}/messages`
     const token = localStorage.getItem('authToken')
     console.log(token)
     const options = {
@@ -659,6 +625,5 @@ export const useMessageStore = defineStore('messageStore', () => {
     leaveChat,
     sendMessage,
     getMsgs,
-    getOldMsgs,
   }
 })

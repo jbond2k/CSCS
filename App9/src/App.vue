@@ -27,6 +27,7 @@ const route = useRoute()
   flex-direction: column;
   width: 99vw;
   height: 98vh;
+  overflow-y: hidden;
 }
 
 .views {

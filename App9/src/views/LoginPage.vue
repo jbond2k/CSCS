@@ -41,7 +41,11 @@ async function signin() {
             <input type="checkbox" v-model="showPassword" />
             <span class="slider"></span>
           </label>
-          <input :type="showPassword ? 'text' : 'password'" v-model="password" />
+          <input
+            :type="showPassword ? 'text' : 'password'"
+            v-model="password"
+            @keydown.enter="signin"
+          />
         </div>
         <span v-if="fail" class="error-messages">Invalid username or password</span>
         <button @click="signin">Sign In</button>

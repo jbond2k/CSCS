@@ -97,7 +97,11 @@ async function signup() {
             <span class="slider"></span>
           </label>
 
-          <input :type="showPassword ? 'text' : 'password'" v-model="password" />
+          <input
+            :type="showPassword ? 'text' : 'password'"
+            v-model="password"
+            @keydown.enter="signup"
+          />
         </div>
         <button @click="signup">Create</button>
       </div>

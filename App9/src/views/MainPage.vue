@@ -1,6 +1,6 @@
 <script setup>
 import { useMessageStore } from '../stores/messageStore'
-import { ref, computed, onUnmounted, onMounted, nextTick } from 'vue'
+import { ref, computed, onUnmounted } from 'vue'
 import { onBeforeRouteLeave } from 'vue-router'
 
 const messageStore = useMessageStore()
